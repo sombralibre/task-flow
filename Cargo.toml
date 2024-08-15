@@ -1,0 +1,12 @@
+[package]
+name = "task-flow"
+version = "0.1.0"
+edition = "2021"
+
+resolver = "2"
+
+[dependencies]
+tokio = { version = "1", features = ["full"]  }
+tokio-stream = "0.1"
+futures = "0.3"
+async-trait = "0.1"
