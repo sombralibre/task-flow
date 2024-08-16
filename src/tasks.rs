@@ -15,14 +15,14 @@ use tokio_stream::Stream;
 #[derive(Debug, Clone)]
 pub struct Task<Inbox, Outbox, Output, S>
 where
-    S: Step<Inbox, Outbox, Output> + Clone,
+    S: Step<Inbox, Outbox, Output> + Clone + Send + Sync + 'static,
     Inbox: Stream + Send + Sync + 'static,
     Outbox: Send + Sync + 'static,
 {
-    inbox: Option<Inbox>,
-    outbox: Option<Outbox>,
-    step: S,
-    timer: Option<Duration>,
+    pub inbox: Option<Inbox>,
+    pub outbox: Option<Outbox>,
+    pub step: S,
+    pub timer: Option<Duration>,
     _phantom: PhantomData<Output>,
 }
 
@@ -31,7 +31,7 @@ where
 ///
 impl<Inbox, Outbox, Output, S> Task<Inbox, Outbox, Output, S>
 where
-    S: Step<Inbox, Outbox, Output> + Clone,
+    S: Step<Inbox, Outbox, Output> + Clone + Send + Sync + 'static,
     Inbox: Stream + Send + Sync + 'static,
     Outbox: Send + Sync + 'static,
 {
@@ -55,6 +55,7 @@ where
             }),
         }
     }
+
     pub async fn start<Fut>(
         self,
         task: impl Fn(Task<Inbox, Outbox, Output, S>) -> Fut,

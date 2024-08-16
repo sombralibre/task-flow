@@ -5,7 +5,7 @@ use tokio::sync::mpsc::{error::SendError, Sender, UnboundedSender};
 /// Simple sender interface
 ///
 #[async_trait]
-pub(crate) trait Informer<T> {
+pub trait Informer<T> {
     async fn send(&self, value: T) -> Result<(), SendError<T>>
     where
         T: Sync + Send;

@@ -6,7 +6,7 @@ use futures::future::{BoxFuture, Future};
 /// Task required behavior.
 ///
 #[async_trait]
-pub(crate) trait Step<Inbox, Outbox, Output> {
+pub trait Step<Inbox, Outbox, Output> {
     type Error: Send;
 
     async fn run(self, inbox: Option<Inbox>, outbox: Option<Outbox>) -> Result<Output, Self::Error>
