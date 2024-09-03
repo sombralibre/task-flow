@@ -12,7 +12,7 @@ pub enum TaskError {
 impl Display for TaskError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Common(erro) => write!(f, "{}", erro),
+            Self::Common(e) => write!(f, "{e}"),
             Self::Parse => write!(f, "Invalid parameters combination."),
         }
     }

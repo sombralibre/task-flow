@@ -11,36 +11,36 @@ use std::{future::Future, marker::PhantomData, time::Duration};
 /// tasks
 ///
 #[derive(Debug, Clone)]
-pub struct Task<Inbox, InboxItem, Outbox, Output, S>
+pub struct Task<I, T, J, K, S>
 where
-    S: Step<InboxItem, Outbox, Output> + Send + Sync + 'static,
-    InboxItem: Send + Sync + 'static,
-    Inbox: Send + Sync + 'static,
-    Outbox: Send + Sync + 'static + Conduit,
-    Output: Send + Sync + 'static,
+    S: Step<T, J, K> + Send + Sync + 'static,
+    T: Send + Sync + 'static,
+    I: Send + Sync + 'static,
+    J: Send + Sync + 'static + Conduit,
+    K: Send + Sync + 'static,
 {
-    pub inbox: Option<Inbox>,
-    pub outbox: Option<Outbox>,
+    pub inbox: Option<I>,
+    pub outbox: Option<J>,
     pub step: std::sync::Arc<Box<S>>,
     pub timer: Option<Duration>,
-    _phantom: PhantomData<Output>,
-    _ignore: PhantomData<InboxItem>,
+    _phantom: PhantomData<K>,
+    _ignore: PhantomData<T>,
 }
 
 ///
 /// basic constructor
 ///
-impl<Inbox, InboxItem, Outbox, Output, S> Task<Inbox, InboxItem, Outbox, Output, S>
+impl<I, T, J, K, S> Task<I, T, J, K, S>
 where
-    S: Step<InboxItem, Outbox, Output> + Send + Sync + 'static,
-    InboxItem: Send + Sync + 'static,
-    Inbox: Send + Sync + 'static,
-    Outbox: Send + Sync + 'static + Conduit,
-    Output: Send + Sync + 'static,
+    S: Step<T, J, K> + Send + Sync + 'static,
+    T: Send + Sync + 'static,
+    I: Send + Sync + 'static,
+    J: Send + Sync + 'static + Conduit,
+    K: Send + Sync + 'static,
 {
     pub fn new<P>(
-        inbox: Option<Inbox>,
-        outbox: Option<Outbox>,
+        inbox: Option<I>,
+        outbox: Option<J>,
         step: S,
         timer: Option<Duration>,
     ) -> Result<Self, TaskError>
@@ -62,7 +62,7 @@ where
 
     pub async fn start<Fut>(
         self: Box<Self>,
-        task: impl Fn(Task<Inbox, InboxItem, Outbox, Output, S>) -> Fut,
+        task: impl Fn(Task <I, T, J, K, S>) -> Fut + Send,
     ) -> Result<(), TaskError>
     where
         Fut: Future<Output = Result<(), TaskError>> + Send + Sync + 'static,
