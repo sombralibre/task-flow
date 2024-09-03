@@ -1,7 +1,14 @@
+#![warn(clippy::all, clippy::pedantic, clippy::nursery)]
 mod errors;
-mod notify;
 mod params;
+mod pipe;
 mod steps;
 mod tasks;
 
-pub use self::{errors::TaskError, params::*, steps::TaskStep, tasks::Task};
+pub use self::{
+    errors::TaskError,
+    params::*,
+    pipe::Conduit,
+    steps::{Step, TaskStep},
+    tasks::Task,
+};

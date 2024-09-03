@@ -1,39 +1,42 @@
 use crate::{
     errors::TaskError,
     params::{ParamsParser, ParserResult},
+    pipe::Conduit,
     steps::Step,
 };
 
-use futures::future::Future;
-use std::marker::PhantomData;
-use tokio::time::Duration;
-use tokio_stream::Stream;
+use std::{future::Future, marker::PhantomData, time::Duration};
 
 ///
 /// tasks
 ///
 #[derive(Debug, Clone)]
-pub struct Task<Inbox, Outbox, Output, S>
+pub struct Task<Inbox, InboxItem, Outbox, Output, S>
 where
-    S: Step<Inbox, Outbox, Output> + Clone + Send + Sync + 'static,
-    Inbox: Stream + Send + Sync + 'static,
-    Outbox: Send + Sync + 'static,
+    S: Step<InboxItem, Outbox, Output> + Send + Sync + 'static,
+    InboxItem: Send + Sync + 'static,
+    Inbox: Send + Sync + 'static,
+    Outbox: Send + Sync + 'static + Conduit,
+    Output: Send + Sync + 'static,
 {
     pub inbox: Option<Inbox>,
     pub outbox: Option<Outbox>,
-    pub step: S,
+    pub step: std::sync::Arc<Box<S>>,
     pub timer: Option<Duration>,
     _phantom: PhantomData<Output>,
+    _ignore: PhantomData<InboxItem>,
 }
 
 ///
 /// basic constructor
 ///
-impl<Inbox, Outbox, Output, S> Task<Inbox, Outbox, Output, S>
+impl<Inbox, InboxItem, Outbox, Output, S> Task<Inbox, InboxItem, Outbox, Output, S>
 where
-    S: Step<Inbox, Outbox, Output> + Clone + Send + Sync + 'static,
-    Inbox: Stream + Send + Sync + 'static,
-    Outbox: Send + Sync + 'static,
+    S: Step<InboxItem, Outbox, Output> + Send + Sync + 'static,
+    InboxItem: Send + Sync + 'static,
+    Inbox: Send + Sync + 'static,
+    Outbox: Send + Sync + 'static + Conduit,
+    Output: Send + Sync + 'static,
 {
     pub fn new<P>(
         inbox: Option<Inbox>,
@@ -49,20 +52,21 @@ where
             ParserResult::Valid => Ok(Self {
                 inbox,
                 outbox,
-                step,
+                step: std::sync::Arc::new(Box::new(step)),
                 timer,
                 _phantom: PhantomData,
+                _ignore: PhantomData,
             }),
         }
     }
 
     pub async fn start<Fut>(
-        self,
-        task: impl Fn(Task<Inbox, Outbox, Output, S>) -> Fut,
+        self: Box<Self>,
+        task: impl Fn(Task<Inbox, InboxItem, Outbox, Output, S>) -> Fut,
     ) -> Result<(), TaskError>
     where
         Fut: Future<Output = Result<(), TaskError>> + Send + Sync + 'static,
     {
-        task(self).await
+        task(*self).await
     }
 }
