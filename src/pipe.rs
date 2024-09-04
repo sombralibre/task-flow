@@ -2,12 +2,30 @@
 ///
 /// Simple sender interface
 ///
-// #[async_trait]
-// pub trait Conduit<T> {
-//     async fn try_send(&self, msg: T) -> Result<(), SendError<T>>
-//     where
-//         T: Sync + Send + 'static;
-// }
+/// Example:
+///
+/// ```
+///use tokio::sync::mpsc::UnboundedSender;
+///
+/// #[derive(Clone)]
+///struct SenderWrapper<Chan>(Chan);
+///
+///impl<Chan> SenderWrapper<Chan> {
+///    fn new(chan: Chan) -> Self {
+///        Self(chan)
+///    }
+///}
+///
+///impl Conduit for SenderWrapper<UnboundedSender<usize>> {
+///    type Item = usize;
+///    type Error = SendError<Self::Item>;
+///    type Output = ();
+///
+///    async fn try_send(&self, msg: Self::Item) -> Result<Self::Output, Self::Error> {
+///        self.0.send(msg)
+///    }
+///}
+/// ```
 #[trait_variant::make(Conduit: Send)]
 pub trait LocalConduit {
     type Error;
@@ -17,29 +35,3 @@ pub trait LocalConduit {
     #[allow(dead_code)]
     async fn try_send(&self, msg: Self::Item) -> Result<Self::Output, Self::Error>;
 }
-
-//
-// Implements the `TaskSender` interface for `Sender<T>`
-//
-// #[async_trait]
-// impl<T> Conduit<T> for Sender<T>
-// where
-//     T: Sync + Send + 'static,
-// {
-//     async fn try_send(&self, msg: T) -> Result<(), SendError<T>> {
-//         self.send(msg).await
-//     }
-// }
-
-//
-// Implements the `TaskSender` interface for `UnboundedSender<T>`
-//
-// #[async_trait]
-// impl<T> Conduit<T> for UnboundedSender<T>
-// where
-//     T: Sync + Send + 'static,
-// {
-//     async fn try_send(&self, msg: T) -> Result<(), SendError<T>> {
-//         self.send(msg)
-//     }
-// }
